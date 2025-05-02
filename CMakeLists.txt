@@ -11,7 +11,6 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(-Werror)
     
     add_compile_options(-Wall -Wextra)
-    
     # More specific warnings can be added as needed
     add_compile_options(-Wconversion -Wshadow -Wundef -Wunused)
 endif()
