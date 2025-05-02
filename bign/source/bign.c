@@ -1,18 +1,21 @@
+#define BIGN_PRIVATE
 #include <bign/bign.h>
 #include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <omp.h>
 
 #define HEX_TO_DIGIT(hex, offset)((hex - offset) + 10) 
 
-void bign_print(const bign_t* number)
+BIGN_API void bign_print(const bign_t* number)
 {
 	if(number == NULL)
 	{
 		printf("(null)");
 	}
 
+	#pragma omp parrallel
 	for(size_t i = 0; i < number->len; i += 1)
 	{
 		printf("%u", ((uint32_t)number->digits[i]));
@@ -23,6 +26,7 @@ static void bign_inner_digits_from_str(const char* num_str, size_t count, uint8_
 {
 	if(num_str == NULL || digits == NULL) return;
 	
+	#pragma omp parrallel
 	for(size_t i = 0; i < count; i += 1 )
 	{
 		uint8_t code = (uint8_t)num_str[i];
@@ -54,21 +58,29 @@ static void bign_inner_shift_right(uint8_t* digits, const size_t bits, const siz
 		return;
 	}
 
+	#pragma omp parrallel
 	for (size_t i = bits - 1; i >= actual_shift; i--) 
 	{
 		digits[i] = digits[i - actual_shift];
 	}
 
+	#pragma omp parrallel
 	for (size_t i = 0; i < actual_shift; i++) 
 	{
 		digits[i] = 0;
 	}
 }
 
-int8_t bign_create(const uint8_t* digits, const size_t dlen, const uint8_t base, const size_t bits, bign_t* number)
+BIGN_API int8_t bign_create(const size_t bits, bign_t *number)
 {
-	(void)(number);
+	number->digits = calloc(bits, sizeof(uint8_t));
+	if(number->digits == NULL) return -1;
+	number->len = bits;
+	return 0;
+}
 
+BIGN_API int8_t bign_create_from_digits(const uint8_t* digits, const size_t dlen, const uint8_t base, const size_t bits, bign_t* number)
+{
 	uint8_t* num = calloc(bits, sizeof(uint8_t));
 	if (num == NULL)
 	{
@@ -96,7 +108,7 @@ int8_t bign_create(const uint8_t* digits, const size_t dlen, const uint8_t base,
 		}
 		size_t ncounter = 0;
 		uint8_t remainder = 0;
-
+		#pragma  omp parrallel
 		for (size_t i = 0; i < num_len; i += 1)
 		{
 			uint32_t current_num = remainder * base + num[i];
@@ -133,7 +145,8 @@ int8_t bign_create(const uint8_t* digits, const size_t dlen, const uint8_t base,
 		}
 
 	}
-
+	
+	#pragma omp parrallel
 	for (size_t i = 0; i < bcounter / 2; i++) 
 	{
 		uint8_t tmp = bin[i];
@@ -151,8 +164,7 @@ int8_t bign_create(const uint8_t* digits, const size_t dlen, const uint8_t base,
 	return 0;
 }
 
-
-int8_t bign_create_from_str(const char* number_str, const uint8_t base, const size_t bits, bign_t* number)
+BIGN_API int8_t bign_create_from_str(const char* number_str, const uint8_t base, const size_t bits, bign_t* number)
 {
 	size_t nl = strlen(number_str);
 	if(nl == 0) return -1;
@@ -163,15 +175,14 @@ int8_t bign_create_from_str(const char* number_str, const uint8_t base, const si
 	}
 
 	bign_inner_digits_from_str(number_str, nl, digits);
-	int8_t res = bign_create(digits, nl, base, bits, number);
+	int8_t res = bign_create_from_digits(digits, nl, base, bits, number);
 	
 	free(digits);
 
 	return res;
 }
 
-
-void bign_free(bign_t* number)
+BIGN_API void bign_free(bign_t* number)
 {
 	if(number == NULL) return;
 	if(number->digits != NULL)
@@ -180,4 +191,10 @@ void bign_free(bign_t* number)
 		number->digits = NULL;
 	}
 	number->len = 0;
+}
+
+BIGN_API void bign_shift_right(bign_t* number, const size_t bits)
+{
+	if(number == NULL) return;
+	bign_inner_shift_right(number->digits, bits, bits);
 }
