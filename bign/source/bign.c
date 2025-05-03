@@ -15,7 +15,6 @@ BIGN_API void bign_print(const bign_t* number)
 		printf("(null)");
 	}
 
-	#pragma omp parrallel
 	for(size_t i = 0; i < number->len; i += 1)
 	{
 		printf("%u", ((uint32_t)number->digits[i]));
@@ -26,7 +25,7 @@ static void bign_inner_digits_from_str(const char* num_str, size_t count, uint8_
 {
 	if(num_str == NULL || digits == NULL) return;
 	
-	#pragma omp parrallel
+	//#pragma omp parallel for
 	for(size_t i = 0; i < count; i += 1 )
 	{
 		uint8_t code = (uint8_t)num_str[i];
@@ -47,28 +46,89 @@ static void bign_inner_digits_from_str(const char* num_str, size_t count, uint8_
 
 static void bign_inner_shift_right(uint8_t* digits, const size_t bits, const size_t shift)
 {
+	const size_t actual_shift = shift % bits;  
 	if (bits == 0 || shift == 0) 
 	{
 		return;
 	}
 
-	const size_t actual_shift = shift % bits;  
 	if (actual_shift == 0) 
 	{
 		return;
 	}
 
-	#pragma omp parrallel
-	for (size_t i = bits - 1; i >= actual_shift; i--) 
+	for (size_t i = bits - 1; i >= actual_shift; i--)
 	{
 		digits[i] = digits[i - actual_shift];
 	}
 
-	#pragma omp parrallel
-	for (size_t i = 0; i < actual_shift; i++) 
+	for (size_t i = 0; i < actual_shift; i++)
 	{
 		digits[i] = 0;
 	}
+}
+
+
+static void bign_inner_shift_left(uint8_t* digits, const size_t bits, const size_t shift)
+{
+	const size_t actual_shift = shift % bits;
+	const size_t boundary = bits - actual_shift;
+	if (bits == 0 || shift == 0)
+	{
+		return;
+	}
+
+	if (actual_shift == 0)
+	{
+		return;
+	}
+
+
+
+	// Shift the digits left
+	for (size_t i = 0; i < boundary; i++) {
+		digits[i] = digits[i + actual_shift];
+	}
+
+	// Zero out the remaining digits
+	for (size_t i = boundary; i < bits; i++) {
+		digits[i] = 0;
+	}
+}
+
+
+BIGN_API int8_t bign_cpy(bign_t* number, bign_t* dest)
+{
+	if (number->len == dest->len)
+	{
+		if (dest->digits == NULL)
+		{
+			dest->digits = calloc(number->len, sizeof(uint8_t));
+			if (dest->digits == NULL)
+			{
+				return -1;
+			}
+		}
+
+		memcpy(dest->digits, number->digits, number->len * sizeof(uint8_t));
+	}
+	else
+	{
+		if (dest->digits != NULL)
+		{
+			free(dest->digits);
+		}
+		dest->digits = calloc(number->len, sizeof(uint8_t));
+		if (dest->digits == NULL)
+		{
+			return -1;
+		}
+		dest->len = number->len;
+
+		memcpy(dest->digits, number->digits, number->len * sizeof(uint8_t));
+	}
+
+	return 0;
 }
 
 BIGN_API int8_t bign_create(const size_t bits, bign_t *number)
@@ -79,23 +139,35 @@ BIGN_API int8_t bign_create(const size_t bits, bign_t *number)
 	return 0;
 }
 
-BIGN_API int8_t bign_create_from_digits(const uint8_t* digits, const size_t dlen, const uint8_t base, const size_t bits, bign_t* number)
+BIGN_API int8_t bign_create_one(const size_t bits, bign_t* number)
+{
+	number->digits = calloc(bits, sizeof(uint8_t));
+	if (number->digits == NULL) return -1;
+	number->len = bits;
+	number->digits[bits - 1] = 1;
+	return 0;
+}
+
+BIGN_API int8_t bign_create_from_digits(const uint8_t negative, const uint8_t* digits, const size_t dlen, const uint8_t base, const size_t bits, bign_t* number)
 {
 	uint8_t* num = calloc(bits, sizeof(uint8_t));
+	size_t num_len = dlen;
+	uint8_t* bin = NULL;
+	size_t bcounter = 0;
+	size_t ncounter = 0;
+	uint8_t remainder = 0;
 	if (num == NULL)
 	{
 		return -1;
 	}
 	memcpy(num, digits, dlen);
-	size_t num_len = dlen;
 
-	uint8_t* bin = calloc(bits, sizeof(uint8_t));
+	bin = calloc(bits, sizeof(uint8_t));
 	if (bin == NULL)
 	{
 		free(num);
 		return -1;
 	}
-	size_t bcounter = 0;
 
 	while (1)
 	{
@@ -106,9 +178,8 @@ BIGN_API int8_t bign_create_from_digits(const uint8_t* digits, const size_t dlen
 			free(bin);
 			return -1;
 		}
-		size_t ncounter = 0;
-		uint8_t remainder = 0;
-		#pragma  omp parrallel
+		ncounter = 0;
+		remainder = 0;
 		for (size_t i = 0; i < num_len; i += 1)
 		{
 			uint32_t current_num = remainder * base + num[i];
@@ -146,8 +217,7 @@ BIGN_API int8_t bign_create_from_digits(const uint8_t* digits, const size_t dlen
 
 	}
 	
-	#pragma omp parrallel
-	for (size_t i = 0; i < bcounter / 2; i++) 
+	for (size_t i = 0; i < bcounter / 2; i++)
 	{
 		uint8_t tmp = bin[i];
 		bin[i] = bin[bcounter - 1 - i];
@@ -155,6 +225,8 @@ BIGN_API int8_t bign_create_from_digits(const uint8_t* digits, const size_t dlen
 	}
 
 	bign_inner_shift_right(bin, bits, bits-bcounter);
+
+	bin[0] = negative;
 
 	number->len = bits;
 	number->digits = bin;
@@ -167,15 +239,24 @@ BIGN_API int8_t bign_create_from_digits(const uint8_t* digits, const size_t dlen
 BIGN_API int8_t bign_create_from_str(const char* number_str, const uint8_t base, const size_t bits, bign_t* number)
 {
 	size_t nl = strlen(number_str);
+	uint8_t is_neg = 0;
+	int8_t res = 0;
+	uint8_t* digits = NULL;
 	if(nl == 0) return -1;
-	uint8_t* digits = calloc(nl, sizeof(uint8_t));
+	digits = calloc(nl, sizeof(uint8_t));
 	if(digits == NULL)
 	{
 		return -1;
 	}
 
+	if (number_str[0] == '-')
+	{
+		is_neg = 1;
+		number_str += 1;
+	}
+
 	bign_inner_digits_from_str(number_str, nl, digits);
-	int8_t res = bign_create_from_digits(digits, nl, base, bits, number);
+	res = bign_create_from_digits(is_neg, digits, nl, base, bits, number);
 	
 	free(digits);
 
@@ -188,13 +269,17 @@ BIGN_API void bign_free(bign_t* number)
 	if(number->digits != NULL)
 	{
 		free(number->digits);
-		number->digits = NULL;
 	}
-	number->len = 0;
 }
 
 BIGN_API void bign_shift_right(bign_t* number, const size_t bits)
 {
 	if(number == NULL) return;
-	bign_inner_shift_right(number->digits, bits, bits);
+	bign_inner_shift_right(number->digits, number->len, bits);
+}
+
+BIGN_API void bign_shift_left(bign_t* number, const size_t bits) 
+{
+	if (number == NULL) return;
+	bign_inner_shift_left(number->digits, number->len, bits);
 }

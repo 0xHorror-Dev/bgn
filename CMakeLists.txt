@@ -13,12 +13,15 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(-Wall -Wextra)
     # More specific warnings can be added as needed
     add_compile_options(-Wconversion -Wshadow -Wundef -Wunused)
+    add_compile_options(-Wno-unsafe-buffer-usage)
 endif()
 
 find_package(OpenMP)
 if (OPENMP_FOUND)
+message("${OpenMP_C_FLAGS}")
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+
 endif()
 
 if(MSVC)
