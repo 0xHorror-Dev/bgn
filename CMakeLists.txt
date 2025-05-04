@@ -13,7 +13,7 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(-Wall -Wextra)
     # More specific warnings can be added as needed
     add_compile_options(-Wconversion -Wshadow -Wundef -Wunused)
-    add_compile_options(-Wno-unsafe-buffer-usage)
+    add_compile_options(-Wno-unsafe-buffer-usage -Wno-unused-macros)
 endif()
 
 find_package(OpenMP)

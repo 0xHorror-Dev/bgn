@@ -1,7 +1,6 @@
+#define BIGN_PRIVATE
 #include <bign/bign.h>
 #include <bign/op.h>
-#include <omp.h>
-#include <stdio.h>
 #include <string.h>
 
 static inline void bign_inner_sum_add(bign_t* a, bign_t* b, bign_t* dest, uint32_t* ocarry)
@@ -75,6 +74,19 @@ BIGN_API int8_t bign_add(bign_t *a, bign_t *b, bign_t *dest)
 	bign_free(&code_a);
 	bign_free(&code_b);
 	return 0;
+}
+
+BIGN_API int8_t bign_sub(bign_t* a, bign_t* b, bign_t* dest)
+{
+	bign_t new_b = { 0 };
+	bign_create(b->len, &new_b);
+	bign_cpy(b, &new_b);
+
+	b->digits[0] = 1;
+
+	bign_get_additional_code(&new_b, &new_b);
+
+	return bign_add(a, &new_b, dest);
 }
 
 BIGN_API int8_t bign_get_additional_code(bign_t* a, bign_t* dest)

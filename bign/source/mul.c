@@ -1,6 +1,6 @@
+#define BIGN_PRIVATE
 #include <bign/bign.h>
 #include <bign/op.h>
-#include <omp.h>
 #include <stdio.h>
 #include <string.h>
 

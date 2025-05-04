@@ -70,6 +70,8 @@ int main(void)
 
 	bign_print(&c);
 
+	bign_mod(&a, &b, &c);
+	bign_print(&c);
 	bign_free(&a);
 	bign_free(&b);
 
