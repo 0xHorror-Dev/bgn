@@ -29,16 +29,21 @@ BIGN_API int8_t bign_mod(bign_t* a, bign_t* b, bign_t* dest)
 
 	if (bign_create(b->len, &divisor) == -1)
 	{
+		bign_free(&reminder);
 		return -1;
 	}
 
 	if (bign_cpy(a, &reminder) == -1)
 	{
+		bign_free(&reminder);
+		bign_free(&divisor);
 		return -1;
 	}
 
 	if (bign_cpy(b, &divisor) == -1)
 	{
+		bign_free(&reminder);
+		bign_free(&divisor);
 		return -1;
 	}
 
@@ -55,7 +60,11 @@ BIGN_API int8_t bign_mod(bign_t* a, bign_t* b, bign_t* dest)
 	}
 
 	bign_shift_right(&divisor, 1);
-
+	
+	/*
+		TO DO: FIX THIS LOOP
+		condition is not working! rewrite while loop condition!
+	*/
 	while (bign_cmp(&reminder, b) < 0)
 	{
 		if (bign_cmp(&reminder, &divisor) >= 0)
@@ -63,6 +72,12 @@ BIGN_API int8_t bign_mod(bign_t* a, bign_t* b, bign_t* dest)
 			bign_sub(&reminder, &divisor, &reminder);
 		}
 		bign_shift_right(&divisor, 1);
+
+		putchar('\n');
+		bign_print(&divisor);
+		putchar('\n');
+		bign_print(&reminder);
+		putchar('\n');
 	}
 
 	bign_cpy(&reminder, dest);

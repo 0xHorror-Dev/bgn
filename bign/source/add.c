@@ -84,8 +84,6 @@ BIGN_API int8_t bign_sub(bign_t* a, bign_t* b, bign_t* dest)
 
 	b->digits[0] = 1;
 
-	bign_get_additional_code(&new_b, &new_b);
-
 	return bign_add(a, &new_b, dest);
 }
 
