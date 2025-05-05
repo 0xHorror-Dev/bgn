@@ -51,6 +51,7 @@ BIGN_API int8_t bign_mod(bign_t* a, bign_t* b, bign_t* dest)
 		bign_print(&divisor);
 		putchar('\n');
 		bign_print(&reminder);
+		putchar('\n');
 	}
 
 	bign_shift_right(&divisor, 1);

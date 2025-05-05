@@ -38,9 +38,9 @@ int main(void)
 {
 	bign_t a,b,c;
 
-	bign_create_from_str("10", 10, 64, &a);
-	bign_create_from_str("2", 10, 64, &b);
-	bign_create(64, &c);
+	bign_create_from_str("10", 10, 6, &a);
+	bign_create_from_str("2", 10, 6, &b);
+	bign_create(6, &c);
 
 	bign_print(&a);
 	putchar('\n');
@@ -48,27 +48,13 @@ int main(void)
 	putchar('\n');
 	putchar('\n');
 
-	bign_shift_right(&a, 1);
-	bign_shift_right(&b, 1);
-
-	bign_print(&a);
 	putchar('\n');
-	bign_print(&b);
-	putchar('\n');
-	putchar('\n');
-
-	bign_shift_left(&a, 1);
-	bign_shift_left(&b, 1);
-
-	bign_print(&a);
-	putchar('\n');
-	bign_print(&b);
-	putchar('\n');
-	putchar('\n');
-
-	bign_mul(&a, &b, &c);
-
 	bign_print(&c);
+
+	putchar('\n');
+
+	int32_t t = (int32_t)bign_cmp(&b, &a);
+	printf("%d", t);
 
 	bign_mod(&a, &b, &c);
 	bign_print(&c);
