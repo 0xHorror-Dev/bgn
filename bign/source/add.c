@@ -82,7 +82,7 @@ BIGN_API int8_t bign_sub(bign_t* a, bign_t* b, bign_t* dest)
 	bign_create(b->len, &new_b);
 	bign_cpy(b, &new_b);
 
-	b->digits[0] = 1;
+	new_b.digits[0] = 1;
 
 	return bign_add(a, &new_b, dest);
 }

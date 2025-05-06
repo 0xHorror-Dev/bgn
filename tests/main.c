@@ -54,7 +54,10 @@ int main(void)
 
 	putchar('\n');
 
-	bign_div(&a, &b, &c);
+	//bign_mod_slow(&a, &b, &c);
+	//bign_mod(&a, &b, &c);
+	//bign_div(&a, &b, &c);
+	//bign_sub(&a, &b, &c);
 	bign_print(&c);
 	bign_free(&a);
 	bign_free(&b);

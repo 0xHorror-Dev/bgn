@@ -4,10 +4,50 @@
 #include <string.h>
 #include <stdio.h>
 
+BIGN_API int8_t bign_mod_slow(bign_t* a, bign_t* b, bign_t* dest)
+{
+	bign_t reminder = { 0 };
+	if (a == NULL || b == NULL || dest == NULL) return -1;
+	if (a->len != b->len || a->len != dest->len || b->len != dest->len) return -1;
+	if (a->digits == NULL || b->digits == NULL || dest->digits == NULL) return -1;
+	(void)(a);
+	(void)(b);
+	(void)(dest);
+
+	// a<b => ret a
+	if (bign_cmp(a, b) < 0)
+	{
+		bign_cpy(dest, a);
+		return 0;
+	}
+
+	if (bign_create(a->len, &reminder) == -1)
+	{
+		return -1;
+	}
+
+	if (bign_cpy(a, &reminder) == -1)
+	{
+		bign_free(&reminder);
+		return -1;
+	}
+
+	while (bign_cmp(&reminder, b) >= 0)
+	{
+		bign_sub(&reminder, b, &reminder);
+		bign_print(&reminder);
+		putchar('\n');
+	}
+
+	bign_cpy(&reminder, dest);
+
+	bign_free(&reminder);
+
+	return 0;
+}
+
 BIGN_API int8_t bign_mod(bign_t* a, bign_t* b, bign_t* dest)
 {
-	bign_t current_bit = { 0 };
-	bign_t quotient = { 0 };
 	bign_t reminder = { 0 };
 	bign_t divisor = { 0 };
 	if (a == NULL || b == NULL || dest == NULL) return -1;
@@ -35,6 +75,11 @@ BIGN_API int8_t bign_mod(bign_t* a, bign_t* b, bign_t* dest)
 		return -1;
 	}
 
+	if (bign_create(b->len, &divisor) == -1)
+	{
+		bign_free(&reminder);
+		return -1;
+	}
 
 	if (bign_cpy(a, &reminder) == -1)
 	{
@@ -48,25 +93,6 @@ BIGN_API int8_t bign_mod(bign_t* a, bign_t* b, bign_t* dest)
 		bign_free(&reminder);
 		bign_free(&divisor);
 		return -1;
-	}
-
-	for (int64_t i = (int64_t)a->len; i >= 0; i--)
-	{
-		bign_shift_left(&reminder, 1);
-
-		bign_create(reminder.len, &current_bit);
-		current_bit.digits[i] = a->digits[i];
-
-		bign_or(&reminder, &current_bit, &reminder);
-
-		if (bign_cmp(&reminder, &divisor) >= 0)
-		{
-			bign_sub(&reminder, &divisor, &reminder);
-			quotient.digits[i] = 1;
-		}
-
-		bign_free(&current_bit);
-
 	}
 
 

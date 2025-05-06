@@ -16,4 +16,5 @@ BIGN_API int8_t bign_mul(bign_t* a, bign_t* b, bign_t* dest);
 BIGN_API int8_t bign_or(bign_t* a, bign_t* b, bign_t* dest);
 
 BIGN_API int8_t bign_mod(bign_t* a, bign_t* b, bign_t* dest);
+BIGN_API int8_t bign_mod_slow(bign_t* a, bign_t* b, bign_t* dest);
 BIGN_API int8_t bign_div(bign_t* a, bign_t* b, bign_t* dest);
