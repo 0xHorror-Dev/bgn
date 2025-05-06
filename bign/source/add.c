@@ -78,13 +78,18 @@ BIGN_API int8_t bign_add(bign_t *a, bign_t *b, bign_t *dest)
 
 BIGN_API int8_t bign_sub(bign_t* a, bign_t* b, bign_t* dest)
 {
+	int8_t res = 0;
 	bign_t new_b = { 0 };
 	bign_create(b->len, &new_b);
 	bign_cpy(b, &new_b);
 
 	new_b.digits[0] = 1;
 
-	return bign_add(a, &new_b, dest);
+	res = bign_add(a, &new_b, dest);
+
+	bign_free(&new_b);
+
+	return res;
 }
 
 BIGN_API int8_t bign_get_additional_code(bign_t* a, bign_t* dest)

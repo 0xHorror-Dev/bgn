@@ -57,6 +57,7 @@ int main(void)
 	//bign_mod_slow(&a, &b, &c);
 	//bign_mod(&a, &b, &c);
 	//bign_div(&a, &b, &c);
+	bign_div_slow(&a, &b, &c);
 	//bign_sub(&a, &b, &c);
 	bign_print(&c);
 	bign_free(&a);

@@ -46,6 +46,71 @@ BIGN_API int8_t bign_mod_slow(bign_t* a, bign_t* b, bign_t* dest)
 	return 0;
 }
 
+BIGN_API int8_t bign_div_slow(bign_t* a, bign_t* b, bign_t* dest)
+{
+	bign_t reminder = { 0 };
+	bign_t counter = { 0 };
+	bign_t one = { 0 };
+	uint8_t onearr[] = { 1 };
+
+	if (a == NULL || b == NULL || dest == NULL) return -1;
+	if (a->len != b->len || a->len != dest->len || b->len != dest->len) return -1;
+	if (a->digits == NULL || b->digits == NULL || dest->digits == NULL) return -1;
+	(void)(a);
+	(void)(b);
+	(void)(dest);
+
+	// a<b => ret a
+	if (bign_cmp(a, b) < 0)
+	{
+		bign_cpy(dest, a);
+		return 0;
+	}
+
+	if (bign_create(a->len, &reminder) == -1)
+	{
+		return -1;
+	}
+	
+	if (bign_create(a->len, &counter) == -1)
+	{
+		return -1;
+	}
+
+
+	if (bign_create_from_digits(0, onearr, 1, 10, a->len, &one) == -1)
+	{
+		return -1;
+	}
+
+
+
+	if (bign_cpy(a, &reminder) == -1)
+	{
+		bign_free(&reminder);
+		return -1;
+	}
+
+	while (bign_cmp(&reminder, b) >= 0)
+	{
+		bign_sub(&reminder, b, &reminder);
+		//bign_print(&reminder);
+		//putchar('\n');
+		bign_add(&counter, &one, &counter);
+	}
+
+
+	
+
+	bign_cpy(&counter, dest);
+
+	bign_free(&reminder);
+	bign_free(&counter);
+	bign_free(&one);
+
+	return 0;
+}
+
 BIGN_API int8_t bign_mod(bign_t* a, bign_t* b, bign_t* dest)
 {
 	bign_t reminder = { 0 };
