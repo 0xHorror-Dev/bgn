@@ -37,7 +37,6 @@
 int main(void)
 {
 	bign_t a,b,c;
-	int32_t t;
 	
 	//+1 bit for signed bit!
 	bign_create_from_str("10", 10, 8, &a);
@@ -55,10 +54,7 @@ int main(void)
 
 	putchar('\n');
 
-	t = (int32_t)bign_cmp(&b, &a);
-	printf("%d", t);
-
-	bign_mod(&a, &b, &c);
+	bign_div(&a, &b, &c);
 	bign_print(&c);
 	bign_free(&a);
 	bign_free(&b);
